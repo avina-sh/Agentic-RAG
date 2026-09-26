@@ -1,0 +1,32 @@
+[
+  {
+    "question": "What is agentic RAG?",
+    "cache_miss_s": 27.542,
+    "exact_hit_s": 0.0,
+    "semantic_hit_s": 0.525
+  },
+  {
+    "question": "How does the LangGraph agent decide whether to retrieve information?",
+    "cache_miss_s": 10.828,
+    "exact_hit_s": 0.0,
+    "semantic_hit_s": 0.354
+  },
+  {
+    "question": "What happens when retrieved documents are considered irrelevant in the agentic RAG workflow?",
+    "cache_miss_s": 10.878,
+    "exact_hit_s": 0.0,
+    "semantic_hit_s": 0.501
+  },
+  {
+    "question": "What are the main components of a LangGraph workflow?",
+    "cache_miss_s": 10.748,
+    "exact_hit_s": 0.0,
+    "semantic_hit_s": 0.355
+  },
+  {
+    "question": "What is the difference between create_agent and create_deep_agent?",
+    "cache_miss_s": 10.344,
+    "exact_hit_s": 0.0,
+    "semantic_hit_s": 0.376
+  }
+]
