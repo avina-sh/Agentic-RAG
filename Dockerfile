@@ -9,8 +9,6 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
-RUN uv run python -m spacy download en_core_web_lg
-
 EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1

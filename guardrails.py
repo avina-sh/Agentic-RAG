@@ -9,17 +9,26 @@ from fallback import with_retry
 
 from presidio_analyzer import AnalyzerEngine
 from presidio_anonymizer import AnonymizerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 
 analyzer=None
 anonymizer=None
 
 
 def get_pii_engines():
-    global analyzer,anonymizer
+    global analyzer, anonymizer
     if analyzer is None:
-        analyzer=AnalyzerEngine()
-        anonymizer=AnonymizerEngine()
-    return analyzer,anonymizer
+        configuration = {
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
+        }
+        provider = NlpEngineProvider(nlp_configuration=configuration)
+        nlp_engine = provider.create_engine()
+
+        analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
+        anonymizer = AnonymizerEngine()
+
+    return analyzer, anonymizer
 
 def redact_pii(text:str)->tuple[str,bool]:
     analyzer,anonymizer=get_pii_engines()
