@@ -7,6 +7,12 @@ class RouteDecision(BaseModel):
     route :Literal["kb","direct","web"]=Field(
         description="Use kb for questions needing Agentic RAG documents,direct for greetings/simple chat."
     )
+    resolved_query: str = Field(
+        description="The user's question rewritten to be fully self-contained, "
+                    "with any pronouns or references ('it', 'that', 'which') "
+                    "resolved using the conversation history. If the question "
+                    "is already self-contained, return it unchanged."
+    )
 
 class EvidenceGrade(BaseModel):
     grade:Literal["good","weak"]=Field(

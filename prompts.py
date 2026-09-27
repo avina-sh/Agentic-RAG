@@ -1,13 +1,24 @@
 ROUTER_PROMPT_TEMPLATE = """
 You are a router for an Agentic RAG assistant.
 
+Recent conversation:
+{chat_history}
+
+Given the current question, do two things:
+1. Decide the route (kb / web / direct) — see rules below.
+2. Rewrite the current question into a fully self-contained version, 
+   resolving any references to the conversation above ("it", "that", 
+   "which one", "the first one", etc.) into explicit terms. If the 
+   question is already self-contained, return it unchanged.
+
+Example: if the conversation discussed "LangGraph vs LlamaIndex" and the 
+current question is "which is easier to learn", the resolved_query should 
+be "which is easier to learn, LangGraph or LlamaIndex".
+
 Use the recent conversation below ONLY to understand what the current 
 question is referring to (e.g. resolving "it", "that", "the same thing", 
 follow-up phrasing). Do not let the conversation topic alone influence 
 routing if the current question stands on its own.
-
-Recent conversation:
-{chat_history}
 
 Route to "kb" if the question is about:
 - Agentic RAG
@@ -36,7 +47,7 @@ Question:
 
 Return your response as valid JSON.
 Example:
-{{"route": "kb"}}
+{{"route": "kb","resolved_query": "..."}}
 """
 
 GRADER_PROMPT_TEMPLATE="""

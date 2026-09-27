@@ -52,14 +52,16 @@ def route_question(state:AgentState):
     try:
         decision=safe_router_call(ROUTER_PROMPT)
         route=decision.route
+        resolved_query=decision.resolved_query
     except Exception as e:
         print(f"[route_question] Failed after retries {e}")
         route="kb"
+        resolved_query=question
 
-    print("[Router]",decision.route)
+    print(f"[Router] route={route} resolved_query={resolved_query}")
 
     return {
-        "current_query":question,
+        "current_query":resolved_query,
         "source_used":route
     }
 
