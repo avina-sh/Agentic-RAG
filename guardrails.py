@@ -3,7 +3,7 @@ from typing import Literal
 from states import AgentState
 
 from tools import llm
-from config import MAX_QUESTION_LENGTH,PII_ENTITIES,SYSTEM_PROMPT_FINGERPRINTS
+from config import MAX_QUESTION_LENGTH,PII_ENTITIES,SYSTEM_PROMPT_FINGERPRINTS,format_history
 from prompts import INPUT_GUARDRAIL_PROMPT
 from fallback import with_retry
 
@@ -59,11 +59,15 @@ def safe_LLM_call(prompt):
 
 def check_input_safety(state:AgentState)->dict:
     question=state.question
+    history_text=format_history(state.chat_history)
     if len(question) > MAX_QUESTION_LENGTH:
         return {"is_unsafe": True, "unsafe_category": "malicious_code"}
 
     try:
-        result=safe_LLM_call(INPUT_GUARDRAIL_PROMPT.format(question=question))
+        result=safe_LLM_call(INPUT_GUARDRAIL_PROMPT.format(
+            chat_history=history_text,
+            question=question
+        ))
         is_unsafe = result.is_unsafe
         category = result.category
     except Exception as e:

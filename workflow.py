@@ -4,9 +4,9 @@ from typing import Literal
 from states import RouteDecision,EvidenceGrade,AgentState
 from langgraph.graph import StateGraph,START,END
 from tools import llm,web_search
-from prompts import ROUTER_PROMPT_TEMPLATE,GRADER_PROMPT_TEMPLATE,REWRITE_PROMPT_TEMPLATE,PRIVATE_KB_PROMPT_TEMPLATE,WEB_SEARCH_PROMPT_TEMPLATE
+from prompts import ROUTER_PROMPT_TEMPLATE,GRADER_PROMPT_TEMPLATE,REWRITE_PROMPT_TEMPLATE,PRIVATE_KB_PROMPT_TEMPLATE,WEB_SEARCH_PROMPT_TEMPLATE,DIRECT_ANSWER_PROMPT_TEMPLATE
 from database import load_retriever
-from config import MAX_RETRIES
+from config import MAX_RETRIES,format_history
 from guardrails import check_input_safety, decide_safety, refuse, check_output_safety,redact_pii
 from cache import get_cached_answer, store_in_cache
 from fallback import with_retry
@@ -36,7 +36,6 @@ def safe_LLM_call(prompt):
 def safe_tavily_call(query):
     return web_search.invoke(query)
 
-
 def check_pii(state:AgentState)->dict:
     redacted_question,found=redact_pii(state.question)
     if found:
@@ -46,8 +45,9 @@ def check_pii(state:AgentState)->dict:
 
 def route_question(state:AgentState):
     question=state.current_query
+    history=format_history(state.chat_history)
 
-    ROUTER_PROMPT=ROUTER_PROMPT_TEMPLATE.format(question=question)
+    ROUTER_PROMPT=ROUTER_PROMPT_TEMPLATE.format(chat_history=history,question=question)
 
     try:
         decision=safe_router_call(ROUTER_PROMPT)
@@ -195,11 +195,13 @@ def rewrite_query(state:AgentState):
 
 def generate_from_kb(state:AgentState):
     question=state.current_query
+    history=format_history(state.chat_history)
     context="\n\n".join(
         f"[KB Source :{doc.metadata.get('source')}]\n{doc.page_content}"
         for doc in state.kb_docs
     )
     PRIVATE_KB_PROMPT=PRIVATE_KB_PROMPT_TEMPLATE.format(
+        chat_history=history,
         question=question,
         context=context
     )
@@ -218,9 +220,11 @@ def generate_from_kb(state:AgentState):
 
 def generate_from_web(state: AgentState):
     question=state.current_query
+    history=format_history(state.chat_history)
     web_context = state.web_results
 
     WEB_SEARCH_PROMPT=WEB_SEARCH_PROMPT_TEMPLATE.format(
+        chat_history=history,
         question=question,
         web_context=web_context
     )
@@ -238,13 +242,14 @@ def generate_from_web(state: AgentState):
 
 def direct_answer(state: AgentState):
     question=state.current_query
+    history=format_history(state.chat_history)
 
+    DIRECT_ANSWER_PROMPT=DIRECT_ANSWER_PROMPT_TEMPLATE.format(
+        chat_history=history,
+        question=question
+    )
     try:
-        answer = safe_LLM_call(
-            f'''
-            Respond briefly and naturally.
-            Message:{question}'''
-        ).content
+        answer = safe_LLM_call(DIRECT_ANSWER_PROMPT).content
     except Exception as e:
         print(f"[direct_answer] Failed after retries: {e}")
         answer = "I'm having trouble generating a response right now. Please try again in a moment."
@@ -343,16 +348,20 @@ graph = workflow.compile()
 
 print("Industry-style Agentic RAG graph compiled.")
 
-def ask_agent(question:str):
+def ask_agent(question:str,chat_history:list[dict]=None):
 
-    cached=get_cached_answer(question)
-    if cached:
-        return cached
+    chat_history = chat_history or []
+
+    if not chat_history:
+        cached=get_cached_answer(question)
+        if cached:
+            return cached
     
     initial_state:AgentState={
         "question":question,
         "current_query":question,
         "kb_docs":[],
+        "chat_history":chat_history or [],
         "web_results":"",
         "kb_grade":"",
         "web_grade":"",
@@ -363,7 +372,8 @@ def ask_agent(question:str):
 
     result = graph.invoke(initial_state)
 
-    store_in_cache(question,result)
+    if not chat_history:
+        store_in_cache(question,result)
 
     print("\n" + "=" * 90)
     print("QUESTION:")

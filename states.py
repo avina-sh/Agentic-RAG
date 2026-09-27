@@ -17,6 +17,7 @@ class AgentState(BaseModel):
     question:str
     current_query:str
     kb_docs:List[Document]
+    chat_history:List[dict]=[]
     web_results:str
     kb_grade:str
     web_grade:str

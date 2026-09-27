@@ -43,10 +43,9 @@ def warm_up_models():
 
     return True
 
-
-def ask_agent_with_trace(question: str):
+def ask_agent_with_trace(question: str, chat_history: list[dict] | None = None):
     with collect_runs() as run_collector:
-        result = ask_agent(question)
+        result = ask_agent(question,chat_history=chat_history)
 
     trace_url = None
     if run_collector.traced_runs:
@@ -132,7 +131,11 @@ if question:
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
-                result, trace_url = ask_agent_with_trace(question)
+                history=[
+                    {"role" : m["role"], "content" : m["content"]}
+                    for m in st.session_state.messages[:-1]
+                ]
+                result, trace_url = ask_agent_with_trace(question,chat_history=history)
                 answer = result["answer"]
                 source_used = result.get("source_used")
                 kb_docs = result.get("kb_docs")
