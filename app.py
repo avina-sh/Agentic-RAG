@@ -96,7 +96,6 @@ with st.sidebar:
         "Agentic RAG assistant with hybrid search + reranking, "
         "input/output guardrails, PII redaction, semantic caching, "
         "and automatic web fallback for time-sensitive questions.\n\n"
-        "[View source on GitHub](https://github.com/avina-sh)"
     )
     st.checkbox("🔧 Debug mode (show trace links)", key="debug_mode")
 
