@@ -2,7 +2,7 @@ import streamlit as st
 from langsmith import Client
 from langchain_core.tracers.context import collect_runs
 
-from database import load_retriever, get_reranker, load_vector_store
+from database import load_retriever, get_reranker, load_vector_store,load_bm25
 from workflow import ask_agent
 
 st.set_page_config(page_title="Agentic RAG", page_icon="🔎", layout="centered")
@@ -36,6 +36,7 @@ def get_retriever():
 def warm_up_models():
     reranker = get_reranker()
     vectorstore = load_vector_store()
+    load_bm25()
 
     vectorstore.similarity_search("warmup", k=1)
     reranker.predict([["warmup_query", "warmup document text"]])

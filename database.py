@@ -155,6 +155,9 @@ def build_and_cache_bm25(chunks):
     return bm25,chunks
 
 def load_bm25():
+    if not os.path.exists(BM25_CACHE_PATH):
+        print("[BM25] Cache not found — building from source URLs...")
+        ingest()
     with open(BM25_CACHE_PATH,"rb") as f:
         cache=pickle.load(f)
     return cache["bm25"],cache["chunks"]
