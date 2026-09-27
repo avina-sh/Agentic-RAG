@@ -158,9 +158,16 @@ def load_bm25():
     if not os.path.exists(BM25_CACHE_PATH):
         print("[BM25] Cache not found — building from source URLs...")
         ingest()
-    with open(BM25_CACHE_PATH,"rb") as f:
-        cache=pickle.load(f)
-    return cache["bm25"],cache["chunks"]
+
+        if not os.path.exists(BM25_CACHE_PATH):
+            raise RuntimeError(
+                f"BM25 cache still missing at {BM25_CACHE_PATH} after ingest() — "
+                f"check that build_and_cache_bm25() is being called and writing to the correct path."
+            )
+
+    with open(BM25_CACHE_PATH, "rb") as f:
+        cache = pickle.load(f)
+    return cache["bm25"], cache["chunks"]
 
 
 def sparse_search(query,k=4):

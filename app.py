@@ -13,8 +13,8 @@ st.caption("Ask questions grounded in the knowledge base, with automatic web fal
 langsmith_client = Client()
 
 SOURCE_BADGES = {
-    "kb": ("📚 Knowledge Base", "#2563eb"),
-    "web": ("🌐 Web Search", "#059669"),
+    "private_kb": ("📚 Knowledge Base", "#2563eb"),
+    "web_search": ("🌐 Web Search", "#059669"),
     "direct": ("💬 Direct", "#6b7280"),
     "refused": ("🛡️ Blocked by Guardrail", "#dc2626"),
     "error": ("⚠️ Error", "#dc2626"),

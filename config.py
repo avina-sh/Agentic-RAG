@@ -1,9 +1,11 @@
+import os
+
+BM25_CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bm25_cache.pkl")
 INDEX_NAME="agentic-rag-project"
 NAMESPACE="agentic-rag-app"
 MAX_RETRIES = 2
 MAX_QUESTION_LENGTH=1000
 EMBEDDING_DIM = 1536
-BM25_CACHE_PATH = "bm25_cache.pkl"
 
 
 SOURCE_URLS=[
