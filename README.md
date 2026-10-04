@@ -2,7 +2,7 @@
 
 An agentic Retrieval-Augmented Generation system that routes, retrieves, grades, and — when the knowledge base falls short — falls back to live web search, with multi turn session memory, query resolution, guardrails, PII redaction, caching, and full observability built in from scratch.
 
-**[Live Demo](#https://agentic-rag-astnt.streamlit.app/)** · **[Architecture Diagram](#architecture)** · **[Evaluation Results](#evaluation)**
+**[Live Demo](https://agentic-rag-astnt.streamlit.app/)** · **[Architecture Diagram](#architecture)** · **[Evaluation Results](#evaluation)**
 
 ---
 
