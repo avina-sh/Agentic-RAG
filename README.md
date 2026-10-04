@@ -1,16 +1,16 @@
 # Agentic RAG Assistant
 
-An agentic Retrieval-Augmented Generation system that routes, retrieves, grades, and — when the knowledge base falls short — falls back to live web search, with production-oriented guardrails, PII redaction, caching, and full observability built in from scratch.
+An agentic Retrieval-Augmented Generation system that routes, retrieves, grades, and — when the knowledge base falls short — falls back to live web search, with multi turn session memory, query resolution, guardrails, PII redaction, caching, and full observability built in from scratch.
 
-**[Live Demo](#)** · **[Architecture Diagram](#architecture)** · **[Evaluation Results](#evaluation)**
+**[Live Demo](#https://agentic-rag-astnt.streamlit.app/)** · **[Architecture Diagram](#architecture)** · **[Evaluation Results](#evaluation)**
 
 ---
 
 ## Why this project
 
-Most RAG demos stop at "retrieve chunks, stuff into a prompt." This project was built to answer a different question: what does a RAG system look like once you take it seriously as a piece of software that has to be *correct*, *safe*, *fast*, and *measurable* — not just functional?
+Most RAG demos stop at single-turn chunk retrieval. This project was built to explore what a production-grade RAG system looks like when built as a complete software product — one that maintains conversational continuity, stays fast and safe, and relies on evidence over defaults.
 
-Every major design decision below was made, tested, and in several cases *changed* based on evidence — not defaults. That evidence (eval numbers, latency traces, failure cases) is documented throughout this README rather than asserted.
+Every major architecture decision — from multi-turn query resolution and adaptive routing to strict guardrails — was implemented, profiled, and tuned based on actual metrics.
 
 ---
 
@@ -57,6 +57,10 @@ The agent doesn't just retrieve-then-generate — it **decides**: whether a ques
 - A query-rewrite loop reformulates weak queries and retries retrieval before falling back further
 - Citation/groundedness enforcement on final output — generation must be backed by retrieved evidence
 
+### 💬 Multi-turn session memory & query resolution
+- **Session-bound conversational memory**: Tracks previous turns within the same session to provide contextual continuity across multi-turn interactions
+- **Contextual query reformulation**: Resolves coreferences and implicit dependencies in follow-up questions before routing or retrieval, transforming ambiguous inputs into fully self-contained queries
+  
 ### 🛡️ Guardrails
 - **Input safety classifier**: detects prompt injection, jailbreak attempts, prompt leaking, malicious code requests, and illegal/harmful content requests — distinguishing genuine attacks from legitimate technical questions that happen to share vocabulary (e.g., "override the system prompt" *in LangChain* vs. targeting this assistant directly)
 - **Output leak check**: verifies generated responses don't echo internal system prompt content
@@ -81,10 +85,10 @@ All metrics measured with [RAGAS](https://github.com/explodinggradients/ragas) a
 
 | Metric | Score |
 |---|---|
-| Faithfulness | `[PLACEHOLDER]` |
-| Answer Relevancy | `[PLACEHOLDER]` |
-| Context Precision | `[PLACEHOLDER]` |
-| Context Recall | `[PLACEHOLDER]` |
+| Faithfulness | 0.7695942643879453 |
+| Answer Relevancy | 0.9384018463298831 |
+| Context Precision | 0.842140921373453 |
+| Context Recall | 0.9390243902439024 |
 
 ### Retrieval method comparison
 
@@ -92,16 +96,16 @@ Measured to validate that each added layer of retrieval sophistication actually 
 
 | Method | Score |
 |---|---|
-| Dense only (baseline) | `[PLACEHOLDER]` |
-| Hybrid (dense + BM25) | `[PLACEHOLDER]` |
-| Hybrid + cross-encoder reranking | `[PLACEHOLDER]` |
+| Dense only (baseline) | 0.68 |
+| Hybrid (dense + BM25) | 0.71 |
+| Hybrid + cross-encoder reranking | 0.726 |
 
 ### Guardrail accuracy
 
 | Check | Result |
 |---|---|
-| Adversarial detection (injection, jailbreak, leak attempts) | `[PLACEHOLDER]` correctly refused |
-| False-positive rate (legitimate technical questions using guardrail-adjacent vocabulary) | `[PLACEHOLDER]` correctly answered |
+| Adversarial detection (injection, jailbreak, leak attempts) |  6/6 correctly refused |
+| False-positive rate (legitimate technical questions using guardrail-adjacent vocabulary) | 12/12 correctly answered |
 
 > Guardrail tuning note: initial testing surfaced false positives on technical questions like *"How do I override the default system prompt in a LangChain ChatOpenAI call?"* — flagged for sharing vocabulary with real prompt-injection attempts. The classifier prompt was refined to distinguish questions **targeting this assistant** from **general technical discussion of the same concepts**, verified by rerunning both the adversarial and false-positive test sets to confirm the fix didn't weaken true-positive detection.
 
@@ -117,7 +121,6 @@ Investigation with granular per-stage timing traced this to **missing caching**,
 |---|---|---|
 | Baseline (no client/model caching) | 7.94s | 18.00s |
 | + Singleton caching for reranker & vector store client | 3.59s | 8.93s |
-| + Lighter cross-encoder model | `[PLACEHOLDER]` | `[PLACEHOLDER]` |
 | Warm steady-state (post app-startup warm-up) | **~1.4s** | **~7.6s** |
 
 Retrieval quality was verified to be preserved across configuration changes via RAGAS (`context_precision`/`context_recall` held steady, see [Evaluation](#evaluation)) — this was a latency fix, not a quality/latency tradeoff.
@@ -133,7 +136,6 @@ Being explicit about what this project does *not* solve, rather than overclaimin
 - **Not architected for high-concurrency production traffic.** Streamlit's single-process model and provider API rate limits (OpenAI, Pinecone, Tavily) are binding constraints well below internet-scale traffic. A production version would need a stateless API backend (FastAPI), horizontal autoscaling, and a message queue.
 - **Rate limiting is session-scoped, not IP-based.** Sufficient to prevent accidental runaway usage in a single session, not resistant to a determined multi-session abuser. Production would move this to an API gateway.
 - **Semantic cache threshold is deliberately conservative.** Testing showed embedding cosine similarity does not cleanly separate genuine paraphrases from topically-similar-but-different questions (e.g., *"who hosted X"* vs. *"who won X"* scored higher similarity than a true paraphrase pair). The threshold is tuned to avoid false cache hits at the cost of some missed cache opportunities.
-- **No multi-turn conversation memory yet** — each question is currently handled independently.
 - **PII detection covers structured identifiers only** (email, phone, SSN, credit card); general free-text sensitive content is out of scope. `PERSON` entity detection was deliberately excluded after it produced false positives on domain-specific proper nouns (e.g., flagging "LangGraph" as a person's name).
 - **Output content moderation is limited to system-prompt-leak detection** — does not include a general toxicity/bias check on generated answers.
 
