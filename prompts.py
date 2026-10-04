@@ -37,8 +37,20 @@ time-sensitive/real-time information (e.g. "what happened in 2026",
 "latest version of X", "current price of Y") — skip the knowledge base
 since it's static and won't have this.
 
-Route to "direct" ONLY for greetings, thanks, small talk, or questions
-that need no factual lookup at all.
+Route to "direct" ONLY for the following:
+Greetings, thanks, small talk, appreciations, compliements or questions that need no factual lookup at all.
+A question about the conversation itself.
+  if the question asks about prior questions, topics, or 
+  messages in the CURRENT interaction — regardless of whether it explicitly 
+  says "in this chat/conversation" or not. Phrases like "what did I ask", 
+  "what questions have I asked", "what did we discuss" 
+  unless there's clear reason to think they're asking about something 
+  outside this conversation entirely.
+
+Examples that should route to "direct":
+- "What are the questions I asked earlier"
+- "What are the questions I asked earlier in this chat"
+- "What did I ask before"
 
 When in doubt between "kb" and "web", prefer "kb".
 
@@ -203,32 +215,65 @@ User input:
 Return JSON: {{"is_unsafe": true/false, "category": "..."}}
 """
 
+# DIRECT_ANSWER_PROMPT_TEMPLATE = """
+# You are a friendly, helpful assistant for an Agentic RAG system focused on
+# topics like agentic RAG, LangGraph, retrieval architectures, and related
+# technical concepts.
+
+# The "Recent conversation" section below IS real prior conversation history
+# that has been provided to you for this session. Treat it as genuine memory
+# of what was discussed — do NOT say things like "I can't recall past
+# conversations" or "I don't have memory of previous messages."
+
+# This message falls into one of two cases:
+# 1. Small talk / chit-chat (greetings, thanks, casual remarks, appreciations, compliments) — respond 
+#    naturally and briefly, 1-3 sentences, do not fabricate technical claims.
+# 2. A question about the conversation itself.
+#   if the question asks about prior questions, topics, or 
+#   messages in the CURRENT interaction — regardless of whether it explicitly 
+#   says "in this chat/conversation" or not. Phrases like "what did I ask", 
+#   "what questions have I asked", "what did we discuss" 
+#   unless there's clear reason to think they're asking about something 
+#   outside this conversation entirely.
+
+# Examples that should route to "direct":
+# - "What are the questions I asked earlier"
+# - "What are the questions I asked earlier in this chat"
+# - "What did I ask before"
+
+# If the user's message actually contains a real technical question rather 
+# than either of the above, gently note that you'd be happy to help and they 
+# can go ahead and ask it directly.
+
+# Recent conversation:
+# {chat_history}
+
+# Current message:
+# {question}
+
+# Respond appropriately based on which case this is.
+# """
+
 DIRECT_ANSWER_PROMPT_TEMPLATE = """
-You are a friendly, helpful assistant for an Agentic RAG system focused on 
-topics like agentic RAG, LangGraph, retrieval architectures, and related 
-technical concepts.
+You are a friendly, helpful assistant for an Agentic RAG system focused on
+agentic RAG, LangGraph, retrieval architectures, and related technical
+concepts.
 
-The "Recent conversation" section below IS real prior conversation history 
-that has been provided to you for this session. Treat it as genuine memory 
-of what was discussed — do NOT say things like "I can't recall past 
-conversations" or "I don't have memory of previous messages." If the user 
-asks what they discussed earlier, answer directly and specifically using 
-the conversation history below. Only say you don't have information if the 
-conversation history is genuinely empty or doesn't cover what they're 
-asking about.
+The "Recent conversation" below is real history from this session. Treat it
+as genuine memory of what was discussed. Never say you can't recall past
+messages.
 
-This question is being handled as small talk / conversational chit-chat 
-(greetings, thanks, casual remarks) rather than a technical question needing 
-retrieval. Respond naturally and briefly — do not fabricate technical claims, 
-and if the user's message actually contains a real technical question, 
-gently note that you'd be happy to help and they can go ahead and ask it 
-directly.
+Respond according to the message type:
+- Small talk (greeting, thanks, compliment): reply naturally in 1-3
+  sentences. Do not make technical claims.
+- Question about the conversation: answer from the history below. Be
+  specific and accurate about what was actually asked or discussed.
+- A real technical question (unexpected here): say you'd be happy to help
+  and invite them to ask it directly.
 
 Recent conversation:
 {chat_history}
 
 Current message:
 {question}
-
-Respond naturally and conversationally, in 1-3 sentences.
 """

@@ -244,7 +244,7 @@ def generate_from_web(state: AgentState):
 
 def direct_answer(state: AgentState):
     question=state.current_query
-    history=format_history(state.chat_history)
+    history=format_history(state.chat_history,max_turns=10)
 
     DIRECT_ANSWER_PROMPT=DIRECT_ANSWER_PROMPT_TEMPLATE.format(
         chat_history=history,
